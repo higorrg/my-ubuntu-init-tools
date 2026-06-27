@@ -1,0 +1,63 @@
+---
+- name: Install NVM
+  ansible.builtin.shell: >
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh | bash
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.nvm/nvm.sh"
+
+- name: Configure NVM in ~/.zshrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    marker: "# {mark} NVM CONFIGURATION"
+    block: |
+      export NVM_DIR="$HOME/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    state: present
+
+- name: Configure NVM in ~/.bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    marker: "# {mark} NVM CONFIGURATION"
+    block: |
+      export NVM_DIR="$HOME/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    state: present
+
+- name: Install Node.js {{ node_version }} via NVM
+  ansible.builtin.shell: |
+    export NVM_DIR="{{ ansible_facts['user_dir'] }}/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install {{ node_version }}
+    nvm alias default {{ node_version }}
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.nvm/versions/node"
+
+- name: Get Node.js version
+  ansible.builtin.shell: |
+    export NVM_DIR="{{ ansible_facts['user_dir'] }}/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    node -v
+  args:
+    executable: /bin/bash
+  register: node_ver
+  changed_when: false
+
+- name: Get npm version
+  ansible.builtin.shell: |
+    export NVM_DIR="{{ ansible_facts['user_dir'] }}/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npm -v
+  args:
+    executable: /bin/bash
+  register: npm_ver
+  changed_when: false
+
+- name: Display Node.js and npm versions
+  ansible.builtin.debug:
+    msg:
+      - "Node.js: {{ node_ver.stdout }}"
+      - "npm:     {{ npm_ver.stdout }}"

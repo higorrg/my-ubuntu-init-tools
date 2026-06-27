@@ -1,0 +1,40 @@
+---
+- name: Install snapd
+  ansible.builtin.apt:
+    name: snapd
+    state: present
+  become: yes
+
+- name: Install DBEaver Community Edition
+  ansible.builtin.shell: snap install dbeaver-ce --classic
+  args:
+    creates: /snap/dbeaver-ce
+  become: yes
+
+- name: Install Flatpak
+  ansible.builtin.apt:
+    name: flatpak
+    state: present
+  become: yes
+
+- name: Add Flathub repository
+  ansible.builtin.shell: >
+    flatpak remote-add --if-not-exists flathub
+    https://flathub.org/repo/flathub.flatpakrepo
+  args:
+    executable: /bin/bash
+  changed_when: false
+  ignore_errors: yes
+  become: yes
+
+- name: Install Visual Studio Code
+  ansible.builtin.shell: flatpak install -y flathub com.visualstudio.code
+  args:
+    executable: /bin/bash
+    creates: /var/lib/flatpak/app/com.visualstudio.code
+
+- name: Install IntelliJ IDEA Community
+  ansible.builtin.shell: flatpak install -y flathub com.jetbrains.IntelliJ-IDEA-Community
+  args:
+    executable: /bin/bash
+    creates: /var/lib/flatpak/app/com.jetbrains.IntelliJ-IDEA-Community

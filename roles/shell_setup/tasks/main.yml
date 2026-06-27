@@ -1,0 +1,61 @@
+---
+- name: Install zsh
+  ansible.builtin.apt:
+    name: zsh
+    state: present
+  become: yes
+
+- name: Install oh-my-zsh
+  ansible.builtin.shell: >
+    CHSH=no RUNZSH=no sh -c
+    "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
+
+- name: Set zsh theme to fino-time
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    regexp: '^ZSH_THEME='
+    line: 'ZSH_THEME="fino-time"'
+    state: present
+
+- name: Add zsh aliases
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    marker: "# {mark} CUSTOM ALIASES"
+    block: |
+      alias l='ls -lh'
+      alias ll='ls -lha'
+    state: present
+
+- name: Update ls alias in bashrc (ll)
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    regexp: "^alias ll='ls -alF'"
+    line: "alias ll='ls -lha'"
+
+- name: Update ls alias in bashrc (l)
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    regexp: "^alias l='ls -CF'"
+    line: "alias l='ls -lh'"
+
+- name: Add custom zsh functions
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    marker: "# {mark} CUSTOM FUNCTIONS"
+    block: |
+      {% raw %}prompt_context() {
+        if [[ "$USERNAME" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+          prompt_segment black default "%(!.%{%F{yellow}%}.)%n@%m %D{%f/%m/%y} %D{%K:%M:%S}\n"
+        fi
+      }
+
+      _java_completion() {
+        local state line
+        _arguments \
+          '*:file:_files -g "*.java" -g "*.class"'
+      }
+      compdef _java_completion java{% endraw %}
+    state: present

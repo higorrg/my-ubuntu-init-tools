@@ -1,0 +1,76 @@
+---
+- name: Get GNOME Shell version
+  ansible.builtin.shell: gnome-shell --version | grep -oP '\d+' | head -1
+  register: gnome_version_raw
+  changed_when: false
+  failed_when: false
+
+- name: Install Chrome and GNOME extensions
+  when:
+    - ansible_facts['distribution'] == 'Ubuntu'
+    - ansible_facts['distribution_version'] is version('24.04', '>=')
+    - gnome_version_raw.stdout | default('0') | int == 46
+  block:
+    - name: Download Google Chrome
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/google-chrome-stable_current_amd64.deb
+        mode: '0644'
+
+    - name: Install Google Chrome
+      ansible.builtin.apt:
+        deb: /tmp/google-chrome-stable_current_amd64.deb
+      become: yes
+
+    - name: Remove Chrome installer
+      ansible.builtin.file:
+        path: /tmp/google-chrome-stable_current_amd64.deb
+        state: absent
+
+    - name: Install GNOME shell packages
+      ansible.builtin.apt:
+        name:
+          - chrome-gnome-shell
+          - gnome-shell-extensions
+        state: present
+      become: yes
+
+    - name: Install GNOME extensions
+      block:
+        - name: Download GNOME extensions
+          ansible.builtin.get_url:
+            url: "{{ item.url }}"
+            dest: "/tmp/{{ item.filename }}"
+            mode: '0644'
+          loop: "{{ gnome_extensions }}"
+
+        - name: Install GNOME extensions
+          ansible.builtin.shell: >
+            gnome-extensions install /tmp/{{ item.filename }}
+          args:
+            executable: /bin/bash
+          loop: "{{ gnome_extensions }}"
+          register: ext_install
+          changed_when: "'already' not in ext_install.stderr"
+
+        - name: Enable GNOME extensions
+          ansible.builtin.shell: >
+            gnome-extensions enable {{ item.id }}
+          args:
+            executable: /bin/bash
+          loop: "{{ gnome_extensions }}"
+          changed_when: false
+
+        - name: Remove GNOME extension installers
+          ansible.builtin.file:
+            path: "/tmp/{{ item.filename }}"
+            state: absent
+          loop: "{{ gnome_extensions }}"
+
+      rescue:
+        - name: Warn about GNOME extensions failure
+          ansible.builtin.debug:
+            msg: >
+              AVISO: Falha ao instalar extensões GNOME. Verifique se há uma sessão
+              GNOME ativa e se as versões das extensões são compatíveis com sua
+              versão do GNOME. As demais instalações continuarão normalmente.

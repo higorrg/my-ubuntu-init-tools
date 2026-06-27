@@ -1,0 +1,33 @@
+---
+- name: Initialize Ubuntu Development Environment
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars:
+    java_version: "21.0.8-sem"
+    nvm_version: "v0.40.3"
+    node_version: "22"
+    gnome_extensions:
+      - name: "Transparent Top Bar"
+        url: "https://extensions.gnome.org/extension-data/transparent-top-barftpix.com.v24.shell-extension.zip"
+        filename: "transparent-top-barftpix.com.v24.shell-extension.zip"
+        id: "transparent-top-bar@ftpix.com"
+      - name: "Top Panel Workspace Scroll"
+        url: "https://extensions.gnome.org/extension-data/scroll-workspacesgfxmonk.net.v38.shell-extension.zip"
+        filename: "scroll-workspacesgfxmonk.net.v38.shell-extension.zip"
+        id: "scroll-workspaces@gfxmonk.net"
+      - name: "Clipboard Indicator"
+        url: "https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+        filename: "clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+        id: "clipboard-indicator@tudmotu.com"
+
+  roles:
+    - { role: basic_tools, tags: [basic_tools] }
+    - { role: workspace,    tags: [workspace] }
+    - { role: shell_setup,  tags: [shell] }
+    - { role: chrome_gnome, tags: [gnome] }
+    - { role: docker,       tags: [docker] }
+    - { role: sdkman,       tags: [sdkman] }
+    - { role: nodejs,       tags: [nodejs] }
+    - { role: ides,         tags: [ides] }

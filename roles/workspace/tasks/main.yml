@@ -1,0 +1,12 @@
+---
+- name: Create workspace directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/workspace"
+    state: directory
+    mode: '0755'
+
+- name: Create opt directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/opt"
+    state: directory
+    mode: '0755'

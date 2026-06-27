@@ -1,0 +1,22 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install basic tools
+  ansible.builtin.apt:
+    name:
+      - git
+      - vim
+      - curl
+      - fonts-powerline
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - terminator
+      - tree
+      - httpie
+    state: present
+  become: yes

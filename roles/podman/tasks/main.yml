@@ -1,0 +1,47 @@
+---
+- name: Remove conflicting Docker/container packages
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - docker-compose-v2
+      - podman-docker
+      - containerd
+      - runc
+    state: absent
+  become: yes
+  ignore_errors: yes
+
+- name: Install Podman and podman-compose
+  ansible.builtin.apt:
+    name:
+      - podman
+      - podman-compose
+    state: present
+  become: yes
+
+- name: Enable Podman socket for current user
+  ansible.builtin.systemd:
+    name: podman.socket
+    scope: user
+    enabled: yes
+    state: started
+
+- name: Configure Podman environment in ~/.zshrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    marker: "# {mark} PODMAN CONFIGURATION"
+    block: |
+      export DOCKER_HOST=unix:///run/user/{{ ansible_facts['user_uid'] }}/podman/podman.sock
+      export TESTCONTAINERS_RYUK_DISABLED=true
+    state: present
+
+- name: Configure Podman environment in ~/.bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    marker: "# {mark} PODMAN CONFIGURATION"
+    block: |
+      export DOCKER_HOST=unix:///run/user/{{ ansible_facts['user_uid'] }}/podman/podman.sock
+      export TESTCONTAINERS_RYUK_DISABLED=true
+    state: present

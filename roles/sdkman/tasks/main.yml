@@ -1,0 +1,56 @@
+---
+- name: Install SDKman
+  ansible.builtin.shell: curl -s "https://get.sdkman.io" | bash
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.sdkman/bin/sdkman-init.sh"
+
+- name: Configure SDKman init in ~/.zshrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    marker: "# {mark} SDKMAN INIT"
+    block: |
+      export SDKMAN_DIR="$HOME/.sdkman"
+      [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+    state: present
+
+- name: Configure SDKman init in ~/.bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    marker: "# {mark} SDKMAN INIT"
+    block: |
+      export SDKMAN_DIR="$HOME/.sdkman"
+      [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+    state: present
+
+- name: Install Java via SDKman
+  ansible.builtin.shell: |
+    source "{{ ansible_facts['user_dir'] }}/.sdkman/bin/sdkman-init.sh"
+    sdk install java {{ java_version }} < /dev/null
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.sdkman/candidates/java/{{ java_version }}"
+
+- name: Install Maven via SDKman
+  ansible.builtin.shell: |
+    source "{{ ansible_facts['user_dir'] }}/.sdkman/bin/sdkman-init.sh"
+    sdk install maven < /dev/null
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.sdkman/candidates/maven"
+
+- name: Install Quarkus CLI via SDKman
+  ansible.builtin.shell: |
+    source "{{ ansible_facts['user_dir'] }}/.sdkman/bin/sdkman-init.sh"
+    sdk install quarkus < /dev/null
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.sdkman/candidates/quarkus"
+
+- name: Install JBang via SDKman
+  ansible.builtin.shell: |
+    source "{{ ansible_facts['user_dir'] }}/.sdkman/bin/sdkman-init.sh"
+    sdk install jbang < /dev/null
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_facts['user_dir'] }}/.sdkman/candidates/jbang"
