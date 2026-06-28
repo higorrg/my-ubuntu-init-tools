@@ -1,0 +1,178 @@
+---
+# ─── Packages ─────────────────────────────────────────────────────────────────
+- name: Install KDE setup packages
+  ansible.builtin.apt:
+    name:
+      - fonts-hack
+    state: present
+  become: yes
+
+# ─── Darkly Theme ─────────────────────────────────────────────────────────────
+- name: Check if Darkly is installed
+  ansible.builtin.stat:
+    path: /usr/bin/darkly-settings6
+  register: darkly_binary
+
+- name: Download Darkly .deb
+  ansible.builtin.get_url:
+    url: "https://github.com/Bali10050/Darkly/releases/download/v{{ darkly_version }}/darkly-{{ darkly_version }}_kubuntu-25.10_amd64.deb"
+    dest: "/tmp/darkly-{{ darkly_version }}.deb"
+    mode: '0644'
+  when: not darkly_binary.stat.exists
+
+- name: Install Darkly
+  ansible.builtin.apt:
+    deb: "/tmp/darkly-{{ darkly_version }}.deb"
+  become: yes
+  when: not darkly_binary.stat.exists
+
+# ─── Ant-Dark Plasma Theme ────────────────────────────────────────────────────
+- name: Create plasma desktoptheme directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.local/share/plasma/desktoptheme"
+    state: directory
+    mode: '0755'
+
+- name: Check if Ant-Dark theme is installed
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['user_dir'] }}/.local/share/plasma/desktoptheme/Ant-Dark"
+  register: ant_dark_stat
+
+- name: Download Ant theme archive
+  ansible.builtin.get_url:
+    url: "https://github.com/EliverLara/Ant/archive/refs/heads/master.zip"
+    dest: "/tmp/ant-theme-master.zip"
+    mode: '0644'
+  when: not ant_dark_stat.stat.exists
+
+- name: Extract Ant theme archive
+  ansible.builtin.unarchive:
+    src: "/tmp/ant-theme-master.zip"
+    dest: "/tmp/"
+    remote_src: yes
+    creates: "/tmp/Ant-master"
+  when: not ant_dark_stat.stat.exists
+
+- name: Install Ant-Dark KDE theme
+  ansible.builtin.command:
+    cmd: >
+      cp -r /tmp/Ant-master/kde/Dark
+      {{ ansible_facts['user_dir'] }}/.local/share/plasma/desktoptheme/Ant-Dark
+    creates: "{{ ansible_facts['user_dir'] }}/.local/share/plasma/desktoptheme/Ant-Dark"
+  when: not ant_dark_stat.stat.exists
+
+# ─── Widget Style & Window Decoration ─────────────────────────────────────────
+- name: Set widget style to Darkly
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Darkly
+  changed_when: false
+
+- name: Set default browser
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kdeglobals --group General --key BrowserApplication google-chrome.desktop
+  changed_when: false
+
+- name: Set window decoration library to Darkly
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group "org.kde.kdecoration2" --key library org.kde.darkly
+  changed_when: false
+
+- name: Set window decoration theme to Darkly
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group "org.kde.kdecoration2" --key theme Darkly
+  changed_when: false
+
+# ─── Blur & Transparency (KWin) ───────────────────────────────────────────────
+- name: Enable blur effect
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled true
+  changed_when: false
+
+- name: Set blur strength
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group "Effect-blur" --key BlurStrength 8
+  changed_when: false
+
+- name: Disable blur noise
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group "Effect-blur" --key NoiseStrength 0
+  changed_when: false
+
+- name: Set blur saturation
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group "Effect-blur" --key Saturation 226
+  changed_when: false
+
+- name: Enable diminactive effect
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group Plugins --key diminactiveEnabled true
+  changed_when: false
+
+# ─── Virtual Desktops & Hot Corners ──────────────────────────────────────────
+- name: Set 4 virtual desktops
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group Desktops --key Number 4
+  changed_when: false
+
+- name: Set bottom-left hot corner to app launcher
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group ElectricBorders --key BottomLeft ApplicationLauncher
+  changed_when: false
+
+- name: Set top hot corner to KRunner
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file kwinrc --group ElectricBorders --key Top KRunner
+  changed_when: false
+
+# ─── Plasma Theme ─────────────────────────────────────────────────────────────
+- name: Set Plasma theme to Ant-Dark
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file plasmarc --group Theme --key name Ant-Dark
+  changed_when: false
+
+# ─── Floating Panel ───────────────────────────────────────────────────────────
+- name: Set panel to floating mode
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file plasmashellrc --group "PlasmaViews" --group "Panel 2" --key floating 1
+  changed_when: false
+
+- name: Set panel opacity to adaptive
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file plasmashellrc --group "PlasmaViews" --group "Panel 2" --key panelOpacity 2
+  changed_when: false
+
+- name: Set panel thickness
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file plasmashellrc --group "PlasmaViews" --group "Panel 2" --group "Defaults" --key thickness 54
+  changed_when: false
+
+# ─── Konsole Profile ──────────────────────────────────────────────────────────
+- name: Create Konsole config directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.local/share/konsole"
+    state: directory
+    mode: '0755'
+
+- name: Copy Konsole profile
+  ansible.builtin.copy:
+    src: "Perfil 1.profile"
+    dest: "{{ ansible_facts['user_dir'] }}/.local/share/konsole/Perfil 1.profile"
+    mode: '0644'
+
+- name: Set Konsole default profile
+  ansible.builtin.command:
+    cmd: kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile "Perfil 1.profile"
+  changed_when: false
+
+# ─── Reload KDE ───────────────────────────────────────────────────────────────
+- name: Reload KWin settings
+  ansible.builtin.command:
+    cmd: qdbus6 org.kde.KWin /KWin reconfigure
+  changed_when: false
+  failed_when: false
+
+- name: Reload Plasma shell
+  ansible.builtin.command:
+    cmd: qdbus6 org.kde.plasmashell /PlasmaShell refreshCurrentShell
+  changed_when: false
+  failed_when: false
