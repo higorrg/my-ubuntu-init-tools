@@ -23,11 +23,12 @@
         id: "clipboard-indicator@tudmotu.com"
 
   roles:
-    - { role: basic_tools, tags: [basic_tools] }
-    - { role: workspace,    tags: [workspace] }
-    - { role: shell_setup,  tags: [shell] }
-    - { role: chrome_gnome, tags: [gnome] }
-    - { role: docker,       tags: [docker] }
-    - { role: sdkman,       tags: [sdkman] }
-    - { role: nodejs,       tags: [nodejs] }
-    - { role: ides,         tags: [ides] }
+    - { role: basic_tools,   tags: [basic_tools] }
+    - { role: workspace,     tags: [workspace] }
+    - { role: shell_setup,   tags: [shell] }
+    - { role: chrome_gnome,  tags: [gnome] }
+    - { role: docker,        tags: [docker] }
+    - { role: sdkman,        tags: [sdkman] }
+    - { role: nodejs,        tags: [nodejs] }
+    - { role: ides,          tags: [ides] }
+    - { role: wifi_qca9377,  tags: [wifi] }
