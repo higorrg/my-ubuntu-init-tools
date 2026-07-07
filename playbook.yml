@@ -31,5 +31,4 @@
     - { role: sdkman,        tags: [sdkman] }
     - { role: nodejs,        tags: [nodejs] }
     - { role: ides,          tags: [ides] }
-    - { role: wifi_qca9377,  tags: [wifi] }
     - { role: kde_setup,     tags: [kde] }
