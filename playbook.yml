@@ -31,4 +31,3 @@
     - { role: sdkman,        tags: [sdkman] }
     - { role: nodejs,        tags: [nodejs] }
     - { role: ides,          tags: [ides] }
-    - { role: kde_setup,     tags: [kde] }
