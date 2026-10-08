@@ -1,0 +1,59 @@
+---
+- name: Install OpenSSH client
+  ansible.builtin.apt:
+    name: openssh-client
+    state: present
+  become: yes
+
+- name: Create .ssh directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.ssh"
+    state: directory
+    mode: '0700'
+
+- name: Generate ed25519 SSH key
+  ansible.builtin.command: >
+    ssh-keygen -t ed25519 -N ""
+    -C "{{ ansible_facts['user_id'] }}@{{ ansible_facts['hostname'] }}"
+    -f {{ ansible_facts['user_dir'] }}/.ssh/id_ed25519
+  args:
+    creates: "{{ ansible_facts['user_dir'] }}/.ssh/id_ed25519"
+
+# Chave publicada em https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
+- name: Trust GitHub SSH host key
+  ansible.builtin.known_hosts:
+    name: github.com
+    key: "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+    path: "{{ ansible_facts['user_dir'] }}/.ssh/known_hosts"
+    state: present
+
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Download GitHub CLI GPG key
+  ansible.builtin.get_url:
+    url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    dest: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    mode: '0644'
+  become: yes
+
+- name: Add GitHub CLI apt repository
+  ansible.builtin.shell: >
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg]
+    https://cli.github.com/packages stable main" |
+    tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+  args:
+    executable: /bin/bash
+    creates: /etc/apt/sources.list.d/github-cli.list
+  become: yes
+
+- name: Install GitHub CLI
+  ansible.builtin.apt:
+    name: gh
+    state: present
+    update_cache: yes
+  become: yes

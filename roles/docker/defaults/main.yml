@@ -1,0 +1,4 @@
+---
+# Usado só em derivados do Debian que não informam a versão base do Debian em
+# /etc/os-release (ex.: Deepin). Pode ser sobrescrito com -e.
+docker_debian_codename_fallback: bookworm

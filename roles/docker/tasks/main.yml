@@ -22,30 +22,52 @@
     mode: '0755'
   become: yes
 
-- name: Download Docker GPG key
-  ansible.builtin.shell: >
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
-    gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# Derivados do Ubuntu (Kubuntu, Pop!_OS, Zorin, Mint...) informam UBUNTU_CODENAME;
+# os demais membros da família Debian usam o repositório debian.
+- name: Detect Docker apt repository for this distro
+  ansible.builtin.shell: |
+    . /etc/os-release
+    if [ -n "${UBUNTU_CODENAME:-}" ]; then
+      echo "ubuntu $UBUNTU_CODENAME"
+    elif [ "$ID" = debian ]; then
+      echo "debian $VERSION_CODENAME"
+    elif [ -n "${DEBIAN_CODENAME:-}" ]; then
+      echo "debian $DEBIAN_CODENAME"
+    else
+      echo "debian {{ docker_debian_codename_fallback }}"
+    fi
+    dpkg --print-architecture
   args:
     executable: /bin/bash
-    creates: /etc/apt/keyrings/docker.gpg
-  become: yes
+  register: docker_repo_detect
+  changed_when: false
 
-- name: Set Docker GPG key permissions
-  ansible.builtin.file:
-    path: /etc/apt/keyrings/docker.gpg
+# Valores passados com -e têm precedência sobre set_fact, permitindo forçar o repositório
+- name: Set Docker apt repository facts
+  ansible.builtin.set_fact:
+    docker_repo_distro: "{{ docker_repo_detect.stdout_lines[0].split()[0] }}"
+    docker_repo_codename: "{{ docker_repo_detect.stdout_lines[0].split()[1] }}"
+    docker_repo_arch: "{{ docker_repo_detect.stdout_lines[1] }}"
+
+- name: Show selected Docker apt repository
+  ansible.builtin.debug:
+    msg: "Docker repo: {{ docker_repo_distro }} {{ docker_repo_codename }} ({{ docker_repo_arch }})"
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: "https://download.docker.com/linux/{{ docker_repo_distro }}/gpg"
+    dest: /etc/apt/keyrings/docker.asc
     mode: '0644'
   become: yes
 
 - name: Add Docker apt repository
-  ansible.builtin.shell: >
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg]
-    https://download.docker.com/linux/ubuntu
-    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
-    tee /etc/apt/sources.list.d/docker.list > /dev/null
-  args:
-    executable: /bin/bash
-    creates: /etc/apt/sources.list.d/docker.list
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    content: >
+      deb [arch={{ docker_repo_arch }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/{{ docker_repo_distro }}
+      {{ docker_repo_codename }} stable
+    mode: '0644'
   become: yes
 
 - name: Update apt cache after adding Docker repo
