@@ -1,0 +1,14 @@
+---
+gnome_extensions:
+  - name: "Transparent Top Bar"
+    url: "https://extensions.gnome.org/extension-data/transparent-top-barftpix.com.v24.shell-extension.zip"
+    filename: "transparent-top-barftpix.com.v24.shell-extension.zip"
+    id: "transparent-top-bar@ftpix.com"
+  - name: "Top Panel Workspace Scroll"
+    url: "https://extensions.gnome.org/extension-data/scroll-workspacesgfxmonk.net.v38.shell-extension.zip"
+    filename: "scroll-workspacesgfxmonk.net.v38.shell-extension.zip"
+    id: "scroll-workspaces@gfxmonk.net"
+  - name: "Clipboard Indicator"
+    url: "https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+    filename: "clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+    id: "clipboard-indicator@tudmotu.com"
